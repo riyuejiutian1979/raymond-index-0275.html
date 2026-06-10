@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Raymond质押矿池 · RAYC</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            font-family: system-ui, -apple-system, sans-serif;
+            color: #f1f5f9;
+            padding: 16px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            padding: 0.8rem 1.2rem;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+        .logo { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .logo h1 { font-size: 1.2rem; background: linear-gradient(135deg, #38bdf8, #a855f7); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .home-btn {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            padding: 5px 12px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            color: #38bdf8;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .wallet-area { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .btn {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .btn-sm { padding: 5px 12px; font-size: 0.7rem; background: #2d3a5e; border-radius: 30px; }
+        .btn-danger { background: #dc2626; }
+        .btn-success { background: #10b981; }
+        .badge {
+            background: #0f172a;
+            padding: 5px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-family: monospace;
+            border-left: 3px solid #38bdf8;
+        }
+        .card {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 1.2rem;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 4px solid #38bdf8;
+            padding-left: 12px;
+        }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .info-label { color: #94a3b8; }
+        .info-value { font-weight: 600; color: #facc15; }
+        input {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 10px 14px;
+            border-radius: 1rem;
+            color: white;
+            font-size: 0.85rem;
+            width: 100%;
+            outline: none;
+        }
+        .form-group { margin-bottom: 0.8rem; }
+        label { display: block; margin-bottom: 5px; font-size: 0.8rem; color: #cbd5e1; }
+        .admin-section { background: rgba(0,0,0,0.4); border-top: 2px solid #f59e0b; }
+        .error-tip { color: #f87171; background: rgba(220,38,38,0.2); padding: 8px; border-radius: 12px; margin: 8px 0; text-align: center; }
+        .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff; border-top-color: #38bdf8; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        footer { text-align: center; margin-top: 1.5rem; font-size: 0.7rem; color: #64748b; }
+        .network-warning {
+            background: #f59e0b20;
+            border-left: 4px solid #f59e0b;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .switch-network-btn {
+            background: #f59e0b;
+            color: #0f172a;
+            font-weight: bold;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            border: none;
+        }
+        .lock-days-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+        .lock-day-btn {
+            flex: 1;
+            min-width: 70px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 10px 8px;
+            border-radius: 1rem;
+            color: #cbd5e1;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+        }
+        .lock-day-btn.active {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-color: #38bdf8;
+            color: white;
+        }
+        .lock-day-rate {
+            display: block;
+            font-size: 0.6rem;
+            color: #94a3b8;
+            margin-top: 3px;
+        }
+        .orders-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .order-card {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 1rem;
+            padding: 12px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .order-id {
+            background: #3b82f6;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        .order-status {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+        .status-staking { background: #f59e0b20; color: #fbbf24; }
+        .status-mature { background: #10b98120; color: #34d399; }
+        .status-finished { background: #6b728020; color: #9ca3af; }
+        .order-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        .detail-label { color: #94a3b8; }
+        .detail-value { font-weight: 500; color: #facc15; }
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .action-btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+        .action-claim { background: #10b981; color: white; }
+        .action-unstake { background: #dc2626; color: white; }
+        .action-pending { background: #4b5563; color: #9ca3af; cursor: default; }
+        .desktop-table {
+            display: none;
+            overflow-x: auto;
+        }
+        .desktop-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.7rem;
+        }
+        .desktop-table th, .desktop-table td {
+            text-align: left;
+            padding: 10px 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .desktop-table th { color: #94a3b8; font-weight: 500; }
+        @media (min-width: 900px) {
+            .mobile-cards { display: none; }
+            .desktop-table { display: block; }
+        }
+        @media (max-width: 899px) {
+            .mobile-cards { display: block; }
+            .desktop-table { display: none; }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="logo">
+            <h1>⚡ Raymond Stake Vault (RAYC)</h1>
+            <a id="homePageLink" href="#" class="home-btn" target="_self">🏠 首页</a>
+        </div>
+        <div class="wallet-area">
+            <div id="networkBadge" class="badge">⚙️ 未连接</div>
+            <button id="connectBtn" class="btn">🔌 连接钱包</button>
+            <div id="accountDisplay" class="badge">0x...</div>
+        </div>
+    </div>
+
+    <div id="networkWarning" class="network-warning" style="display: none;"></div>
+
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-title">👤 我的矿工档案 <span id="refreshUserBtn" style="margin-left:auto; cursor:pointer;">🔄</span></div>
+            <div id="userInfoArea">
+                <div class="info-row"><span class="info-label">会员等级</span><span id="userLv" class="info-value">T0</span></div>
+                <div class="info-row"><span class="info-label">自质押总额</span><span id="selfStake" class="info-value">0</span></div>
+                <div class="info-row"><span class="info-label">团队总业绩</span><span id="teamVol" class="info-value">0</span></div>
+                <div class="info-row"><span class="info-label">直推人数</span><span id="directCnt" class="info-value">0</span></div>
+                <div class="info-row"><span class="info-label">累计总收益</span><span id="totalEarn" class="info-value">0</span></div>
+                <div class="info-row"><span class="info-label">📦 合约代币余额</span><span id="contractBal" class="info-value">0</span> <span id="balRefreshBtn" style="cursor:pointer;">🔄</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">💰 质押 & 绑定</div>
+            <div class="form-group">
+                <label>🔗 推荐人地址 (Bind Referral)</label>
+                <input type="text" id="referAddr" placeholder="0x...">
+                <button id="bindReferBtn" class="btn-sm" style="margin-top:6px; width:100%;">绑定上级</button>
+            </div>
+            <hr style="margin:12px 0; opacity:0.2;">
+            <div class="form-group">
+                <label>📊 质押数量 (最小1000 RAYC)</label>
+                <input type="number" id="stakeAmount" placeholder="输入数量">
+                <label>📅 锁仓天数</label>
+                <div class="lock-days-group">
+                    <div data-days="30" class="lock-day-btn">30天<span class="lock-day-rate" id="rate30">--%</span></div>
+                    <div data-days="90" class="lock-day-btn">90天<span class="lock-day-rate" id="rate90">--%</span></div>
+                    <div data-days="180" class="lock-day-btn">180天<span class="lock-day-rate" id="rate180">--%</span></div>
+                    <div data-days="360" class="lock-day-btn">360天<span class="lock-day-rate" id="rate360">--%</span></div>
+                </div>
+                <input type="hidden" id="selectedLockDays" value="30">
+                <button id="stakeBtn" class="btn" style="width:100%; margin-top:10px;">✨ 授权并质押</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📋 我的质押订单 <button id="refreshOrdersBtn" class="btn-sm" style="margin-left:auto;">刷新</button></div>
+        <div id="mobileOrdersList" class="mobile-cards orders-container"><div style="text-align: center; padding: 20px;">⚡ 加载中...</div></div>
+        <div id="desktopOrdersList" class="desktop-table"><div style="text-align: center; padding: 20px;">⚡ 加载中...</div></div>
+    </div>
+
+    <div id="adminPanel" class="card admin-section" style="display: none;">
+        <div class="card-title">🛠️ 基金管理 (Owner Only)</div>
+        <div style="background:#0f172a; padding:10px; border-radius:16px; margin-bottom:16px;">
+            <div class="info-row"><span>💰 合约储备金余额</span><strong id="adminContractBal" style="color:#facc15;">0</strong> <button id="refreshAdminBal" class="btn-sm">刷新</button></div>
+        </div>
+        <div class="grid-2">
+            <div><h4>📈 修改利率 (万分比)</h4>
+                <div class="form-group"><label>30天利率</label><input id="editD30" type="number"></div>
+                <div class="form-group"><label>90天利率</label><input id="editD90" type="number"></div>
+                <div class="form-group"><label>180天利率</label><input id="editD180" type="number"></div>
+                <div class="form-group"><label>360天利率</label><input id="editD360" type="number"></div>
+                <button id="updateRateBtn" class="btn-sm">更新利率</button>
+            </div>
+            <div><h4>🏅 等级参数修改 (0~7)</h4>
+                <div class="form-group"><label>等级索引</label><input id="lvIndex" type="number" placeholder="0-7"></div>
+                <div class="form-group"><label>自质押(wei)</label><input id="lvSelf" placeholder="1e18"></div>
+                <div class="form-group"><label>直推升级人数</label><input id="lvDirectNum"></div>
+                <div class="form-group"><label>团队业绩门槛(wei)</label><input id="lvTeamVol"></div>
+                <div class="form-group"><label>分红率(万分比)</label><input id="lvBonus"></div>
+                <button id="updateLvBtn" class="btn-sm">更新等级</button>
+            </div>
+            <div><h4>💎 资金操作</h4>
+                <div class="form-group"><label>充值收益金</label><input id="rechargeAmount" placeholder="代币数量"></div>
+                <button id="adminAddRewardBtn" class="btn-sm">充值 (需授权)</button>
+                <div class="form-group" style="margin-top:10px;"><label>提取盈余</label><input id="withdrawAmount" placeholder="提取数量"></div>
+                <button id="adminWithdrawBtn" class="btn-sm btn-danger">提取盈余</button>
+            </div>
+        </div>
+    </div>
+    <footer>⚡ Polygon网络 | 手机卡片/电脑表格 | 所有功能正常</footer>
+</div>
+
+<script>
+    // ================= 配置区域 =================
+    const TARGET_CHAIN_ID = 137;   // Polygon 主网
+    const HOMEPAGE_URL = "https://www.raymondchain.com/raymond-rayc/web-5.html";  // 修改为您自己的首页
+    const CONTRACT_ADDRESS = "0x601c01A4c5E9c6db87028490108E7a641D23e2C4";
+    // ===========================================
+
+    // 完整 ABI - RaymondStakeNew 合约（包含充值/提取）
+    const CONTRACT_ABI = [
+        "function stakeToken() view returns (address)",
+        "function owner() view returns (address)",
+        "function rateConfig() view returns (uint256 day30,uint256 day90,uint256 day180,uint256 day360)",
+        "function levelParam(uint256) view returns (uint256 selfNeedStake,uint256 needDirectUpLvCnt,uint256 teamNeedVolume,uint256 bonusRate)",
+        "function bindRefer(address referAddr) external",
+        "function stake(uint256 amount,uint256 lockDays) external",
+        "function getDailyReward(uint256 orderId) external",
+        "function unStake(uint256 orderId) external",
+        "function editRate(uint256 d30,uint256 d90,uint256 d180,uint256 d360) external",
+        "function editLvConfig(uint256 lv,uint256 selfStk,uint256 directNum,uint256 teamVol,uint256 bonusRate) external",
+        "function adminAddRewardFund(uint256 amount) external",
+        "function adminTakeSurplus(uint256 outAmount) external",
+        "function getUserBaseInfo(address user) view returns (uint256 lv,uint256 selfStk,uint256 teamVol,uint256 directCnt,uint256 totalEarn)",
+        "function getSingleStake(address user,uint256 orderId) view returns (uint256 amount,uint256 startTs,uint256 endTs,uint256 dayRate,uint256 claimedReward,bool finished)",
+        "function getStakeTotalCnt(address user) view returns (uint256)",
+        "function getDirectList(address user) view returns (address[])",
+        "function getContractTokenBalance() view returns (uint256)"
+    ];
+    const ERC20_ABI = ["function approve(address spender, uint256 amount) returns (bool)", "function allowance(address owner, address spender) view returns (uint256)", "function balanceOf(address account) view returns (uint256)", "function decimals() view returns (uint8)", "function symbol() view returns (string)"];
+
+    let provider, signer, stakeContract, stakeTokenContract;
+    let currentAccount = null;
+    let contractOwner = null;
+    let tokenDecimals = 18;
+    let tokenSymbol = "RAYC";
+    let currentSelectedDays = 30;
+
+    // 首页链接
+    const homeLink = document.getElementById("homePageLink");
+    if (HOMEPAGE_URL && HOMEPAGE_URL !== "https://your-website.com") {
+        homeLink.href = HOMEPAGE_URL;
+    } else {
+        homeLink.href = "#";
+        homeLink.style.opacity = "0.5";
+        homeLink.onclick = (e) => e.preventDefault();
+    }
+
+    // 锁仓天数按钮
+    function initLockDaysButtons() {
+        const btns = document.querySelectorAll('.lock-day-btn');
+        btns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                btns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentSelectedDays = parseInt(this.getAttribute('data-days'));
+                document.getElementById("selectedLockDays").value = currentSelectedDays;
+            });
+        });
+        document.querySelector('.lock-day-btn[data-days="30"]')?.classList.add('active');
+    }
+
+    // 多钱包 Provider 检测
+    function getBestProvider() {
+        if (window.okxwallet?.ethereum) return { provider: window.okxwallet.ethereum, name: "OKX Wallet" };
+        if (window.binancew3w?.ethereum) return { provider: window.binancew3w.ethereum, name: "Binance Web3" };
+        if (window.ethereum) return { provider: window.ethereum, name: "Web3 Wallet" };
+        if (window.web3?.currentProvider) return { provider: window.web3.currentProvider, name: "Legacy" };
+        return null;
+    }
+
+    async function requestAccounts(providerInfo) {
+        if (providerInfo.name === "OKX Wallet" && window.okxwallet) {
+            return await window.okxwallet.request({ method: 'eth_requestAccounts' });
+        } else if (providerInfo.name === "Binance Web3" && window.binancew3w?.ethereum) {
+            return await window.binancew3w.ethereum.request({ method: 'eth_requestAccounts' });
+        } else {
+            return await providerInfo.provider.request({ method: 'eth_requestAccounts' });
+        }
+    }
+
+    // 切换网络
+    async function switchToPolygon() {
+        const providerInfo = getBestProvider();
+        if (!providerInfo) return;
+        const targetHex = "0x" + TARGET_CHAIN_ID.toString(16);
+        try {
+            await providerInfo.provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: targetHex }] });
+            window.location.reload();
+        } catch (switchError) {
+            if (switchError.code === 4902) {
+                try {
+                    await providerInfo.provider.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: targetHex,
+                            chainName: "Polygon Mainnet",
+                            rpcUrls: ["https://polygon-rpc.com"],
+                            nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
+                            blockExplorerUrls: ["https://polygonscan.com/"]
+                        }]
+                    });
+                    window.location.reload();
+                } catch(addError) { console.error(addError); alert("添加网络失败，请手动切换到 Polygon 主网"); }
+            } else {
+                alert("切换网络失败，请手动切换到 Polygon 主网");
+            }
+        }
+    }
+
+    async function initWeb3() {
+        const providerInfo = getBestProvider();
+        if (!providerInfo) {
+            alert("未检测到任何 Web3 钱包！请确保在钱包 DApp 浏览器中打开。");
+            return false;
+        }
+        try {
+            provider = new ethers.providers.Web3Provider(providerInfo.provider);
+            const accounts = await requestAccounts(providerInfo);
+            if (!accounts || accounts.length === 0) throw new Error("未授权账户");
+            currentAccount = accounts[0];
+            signer = provider.getSigner();
+            const network = await provider.getNetwork();
+            const currentChainId = network.chainId;
+            document.getElementById("networkBadge").innerHTML = `🌐 ${providerInfo.name} | 链ID: ${currentChainId}`;
+            document.getElementById("accountDisplay").innerText = `${currentAccount.slice(0,6)}...${currentAccount.slice(-4)}`;
+
+            const warningDiv = document.getElementById("networkWarning");
+            if (currentChainId !== TARGET_CHAIN_ID) {
+                warningDiv.style.display = "flex";
+                warningDiv.innerHTML = `⚠️ 当前网络 (链ID ${currentChainId}) 不是 Polygon (需要 137)！无法使用合约。 
+                    <button id="switchNetworkBtn" class="switch-network-btn">一键切换到 Polygon</button>`;
+                const switchBtn = document.getElementById("switchNetworkBtn");
+                if (switchBtn) switchBtn.onclick = switchToPolygon;
+                return false;
+            } else {
+                warningDiv.style.display = "none";
+                await setupContracts();
+                await loadAllData();
+                return true;
+            }
+        } catch (err) {
+            console.error("连接失败", err);
+            let errMsg = err.message || "未知错误";
+            if (errMsg.includes("CALL_EXCEPTION")) {
+                errMsg = "合约调用失败。请确认：\n1. 合约地址在 Polygon 上是否正确？\n2. 您是否已经切换到 Polygon 网络？\n3. 合约是否已部署并验证？";
+            }
+            alert(`连接失败: ${errMsg}`);
+            return false;
+        }
+    }
+
+    async function setupContracts() {
+        stakeContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        const stakeTokenAddr = await stakeContract.stakeToken();
+        stakeTokenContract = new ethers.Contract(stakeTokenAddr, ERC20_ABI, signer);
+        try { tokenDecimals = await stakeTokenContract.decimals(); } catch(e) { tokenDecimals = 18; }
+        try { tokenSymbol = await stakeTokenContract.symbol(); } catch(e) { tokenSymbol = "RAYC"; }
+        contractOwner = await stakeContract.owner();
+        const isOwner = currentAccount && currentAccount.toLowerCase() === contractOwner.toLowerCase();
+        document.getElementById("adminPanel").style.display = isOwner ? "block" : "none";
+    }
+
+    function formatAmount(bn) {
+        if (!bn) return "0";
+        try { return parseFloat(ethers.utils.formatUnits(bn, tokenDecimals)).toFixed(4); } catch(e) { return bn.toString(); }
+    }
+    function parseAmount(amountStr) { return ethers.utils.parseUnits(amountStr, tokenDecimals); }
+
+    async function loadAllData() { if(!stakeContract || !currentAccount) return; await Promise.all([loadUserInfo(), loadRateConfig(), loadContractBalance(), loadStakeOrders()]); }
+
+    async function loadUserInfo() {
+        try {
+            const base = await stakeContract.getUserBaseInfo(currentAccount);
+            document.getElementById("userLv").innerText = `T${base[0]}`;
+            document.getElementById("selfStake").innerText = formatAmount(base[1]);
+            document.getElementById("teamVol").innerText = formatAmount(base[2]);
+            document.getElementById("directCnt").innerText = base[3].toString();
+            document.getElementById("totalEarn").innerText = formatAmount(base[4]);
+        } catch(e) { console.error(e); }
+    }
+
+    async function loadContractBalance() {
+        try {
+            let balance = await stakeContract.getContractTokenBalance();
+            let balStr = formatAmount(balance);
+            document.getElementById("contractBal").innerHTML = balStr;
+            if(document.getElementById("adminContractBal")) document.getElementById("adminContractBal").innerText = balStr;
+        } catch(e) { console.error("余额加载失败",e); document.getElementById("contractBal").innerHTML = "0"; }
+    }
+
+    async function loadRateConfig() {
+        try {
+            const cfg = await stakeContract.rateConfig();
+            document.getElementById("rate30").innerText = (cfg.day30 / 100).toFixed(2) + "%";
+            document.getElementById("rate90").innerText = (cfg.day90 / 100).toFixed(2) + "%";
+            document.getElementById("rate180").innerText = (cfg.day180 / 100).toFixed(2) + "%";
+            document.getElementById("rate360").innerText = (cfg.day360 / 100).toFixed(2) + "%";
+            document.getElementById("editD30").value = cfg.day30;
+            document.getElementById("editD90").value = cfg.day90;
+            document.getElementById("editD180").value = cfg.day180;
+            document.getElementById("editD360").value = cfg.day360;
+        } catch(e) { console.error(e); }
+    }
+
+    async function loadStakeOrders() {
+        if (!stakeContract || !currentAccount) return;
+        try {
+            const cntRaw = await stakeContract.getStakeTotalCnt(currentAccount);
+            const cnt = cntRaw.toNumber();
+            if (cnt == 0) {
+                document.getElementById("mobileOrdersList").innerHTML = "<div style='text-align:center;padding:20px'>暂无质押订单</div>";
+                document.getElementById("desktopOrdersList").innerHTML = "<div style='text-align:center;padding:20px'>暂无质押订单</div>";
+                return;
+            }
+            let orders = [];
+            for (let i = 0; i < cnt; i++) {
+                const item = await stakeContract.getSingleStake(currentAccount, i).catch(() => null);
+                if (!item) continue;
+                const amount = item.amount;
+                const startTs = item.startTs.toNumber();
+                const endTs = item.endTs.toNumber();
+                const dayRate = item.dayRate;
+                const claimedReward = item.claimedReward;
+                const finished = item.finished;
+                const now = Math.floor(Date.now() / 1000);
+                let passDays = now > startTs ? Math.floor((now - startTs) / 86400) : 0;
+                let totalEarned = amount.mul(dayRate).mul(passDays).div(10000);
+                let pendingReward = totalEarned.sub(claimedReward);
+                if (pendingReward.lt(0)) pendingReward = ethers.BigNumber.from(0);
+                const isMature = now >= endTs;
+                orders.push({ id: i, amount, startTs, endTs, dayRate, claimedReward, pendingReward, finished, isMature });
+            }
+            
+            // 手机卡片
+            let mobileHtml = `<div class="orders-container">`;
+            for (let o of orders) {
+                let statusClass = o.finished ? "status-finished" : (o.isMature ? "status-mature" : "status-staking");
+                let statusText = o.finished ? "✅ 已赎回" : (o.isMature ? "🔓 可解除" : "⏳ 质押中");
+                mobileHtml += `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <span class="order-id">订单 #${o.id}</span>
+                            <span class="order-status ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="order-details">
+                            <div class="detail-row"><span class="detail-label">💰 质押数量</span><span class="detail-value">${formatAmount(o.amount)} ${tokenSymbol}</span></div>
+                            <div class="detail-row"><span class="detail-label">📅 开始时间</span><span class="detail-value">${new Date(o.startTs*1000).toLocaleString()}</span></div>
+                            <div class="detail-row"><span class="detail-label">🔓 解锁时间</span><span class="detail-value">${new Date(o.endTs*1000).toLocaleString()}</span></div>
+                            <div class="detail-row"><span class="detail-label">📈 日利率</span><span class="detail-value">${o.dayRate/100}%/天</span></div>
+                            <div class="detail-row"><span class="detail-label">💸 已领奖励</span><span class="detail-value">${formatAmount(o.claimedReward)}</span></div>
+                            <div class="detail-row"><span class="detail-label">⏳ 待领奖励</span><span class="detail-value">${formatAmount(o.pendingReward)}</span></div>
+                        </div>
+                        <div class="order-actions">
+                            ${!o.finished && o.pendingReward.gt(0) ? `<button class="action-btn action-claim" onclick="claimReward(${o.id})">领取奖励</button>` : ''}
+                            ${!o.finished && o.isMature ? `<button class="action-btn action-unstake" onclick="unStakeOrder(${o.id})">解除质押</button>` : ''}
+                            ${!o.finished && !o.isMature && !o.pendingReward.gt(0) ? `<span class="action-btn action-pending">待解锁</span>` : ''}
+                            ${!o.finished && !o.isMature && o.pendingReward.gt(0) ? `<button class="action-btn action-claim" onclick="claimReward(${o.id})">领取奖励</button><span class="action-btn action-pending">待解锁</span>` : ''}
+                            ${o.finished ? `<span class="action-btn action-pending">已完成</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            mobileHtml += `</div>`;
+            document.getElementById("mobileOrdersList").innerHTML = mobileHtml;
+            
+            // 桌面表格
+            let tableHtml = `<table><thead><tr><th>ID</th><th>数量</th><th>开始时间</th><th>解锁时间</th><th>日利率</th><th>已领</th><th>待领</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
+            for (let o of orders) {
+                let statusText = o.finished ? "已赎回" : (o.isMature ? "可解除" : "质押中");
+                tableHtml += `<tr>
+                    <td>${o.id}</td>
+                    <td>${formatAmount(o.amount)}</td>
+                    <td>${new Date(o.startTs*1000).toLocaleDateString()}</td>
+                    <td>${new Date(o.endTs*1000).toLocaleDateString()}</td>
+                    <td>${o.dayRate/100}%</td>
+                    <td>${formatAmount(o.claimedReward)}</td>
+                    <td>${formatAmount(o.pendingReward)}</td>
+                    <td>${statusText}</td>
+                    <td>
+                        ${!o.finished && o.pendingReward.gt(0) ? `<button class="btn-sm btn-success" onclick="claimReward(${o.id})">领取</button>` : ''}
+                        ${!o.finished && o.isMature ? `<button class="btn-sm btn-danger" onclick="unStakeOrder(${o.id})">解除</button>` : ''}
+                    </td>
+                </tr>`;
+            }
+            tableHtml += `</tbody></table>`;
+            document.getElementById("desktopOrdersList").innerHTML = tableHtml;
+        } catch (err) {
+            console.error(err);
+            document.getElementById("mobileOrdersList").innerHTML = `<div class="error-tip">加载失败，请刷新重试</div>`;
+            document.getElementById("desktopOrdersList").innerHTML = `<div class="error-tip">加载失败，请刷新重试</div>`;
+        }
+    }
+
+    window.claimReward = async function(orderId) {
+        try { const tx = await stakeContract.getDailyReward(orderId); await tx.wait(); alert("领取成功"); await loadAllData(); } 
+        catch(e) { alert("领取失败: "+e.message); }
+    };
+    window.unStakeOrder = async function(orderId) {
+        if(!confirm("解除质押将收回本金+剩余奖励，确认吗？")) return;
+        try { const tx = await stakeContract.unStake(orderId); await tx.wait(); alert("解除成功"); await loadAllData(); } 
+        catch(e) { alert("解除失败: "+e.message); }
+    };
+
+    async function approveAndStake() {
+        if (!currentAccount) { alert("请连接钱包"); return; }
+        const amountInput = document.getElementById("stakeAmount").value;
+        if (!amountInput || parseFloat(amountInput) < 1000) { alert("质押数量最小 1000 代币"); return; }
+        const amountWei = parseAmount(amountInput);
+        const allowance = await stakeTokenContract.allowance(currentAccount, CONTRACT_ADDRESS);
+        if (allowance.lt(amountWei)) {
+            const approveTx = await stakeTokenContract.approve(CONTRACT_ADDRESS, amountWei);
+            await approveTx.wait();
+        }
+        const tx = await stakeContract.stake(amountWei, currentSelectedDays);
+        await tx.wait();
+        alert("质押成功！");
+        await loadAllData();
+    }
+
+    async function bindReferral() {
+        const refer = document.getElementById("referAddr").value.trim();
+        if (!ethers.utils.isAddress(refer)) { alert("无效地址"); return; }
+        if (refer.toLowerCase() === currentAccount.toLowerCase()) { alert("不能绑定自己"); return; }
+        const tx = await stakeContract.bindRefer(refer);
+        await tx.wait();
+        alert("绑定成功");
+        await loadUserInfo();
+    }
+
+    async function updateRate() { 
+        const d30=document.getElementById("editD30").value,d90=document.getElementById("editD90").value,d180=document.getElementById("editD180").value,d360=document.getElementById("editD360").value;
+        const tx=await stakeContract.editRate(d30,d90,d180,d360);
+        await tx.wait();
+        alert("利率已更新");
+        await loadRateConfig();
+    }
+    async function updateLvConfig() { 
+        const lv=document.getElementById("lvIndex").value,selfNeed=document.getElementById("lvSelf").value,directNum=document.getElementById("lvDirectNum").value,teamVol=document.getElementById("lvTeamVol").value,bonus=document.getElementById("lvBonus").value;
+        const weiSelf=parseAmount(selfNeed), weiTeam=parseAmount(teamVol);
+        const tx=await stakeContract.editLvConfig(lv,weiSelf,directNum,weiTeam,bonus);
+        await tx.wait();
+        alert("等级配置已修改");
+    }
+    async function adminAddReward() { 
+        const amount=document.getElementById("rechargeAmount").value;
+        if(!amount) return;
+        const wei=parseAmount(amount);
+        const allowance=await stakeTokenContract.allowance(currentAccount,CONTRACT_ADDRESS);
+        if(allowance.lt(wei)){ const approveTx=await stakeTokenContract.approve(CONTRACT_ADDRESS,wei); await approveTx.wait(); }
+        const tx=await stakeContract.adminAddRewardFund(wei);
+        await tx.wait();
+        alert("充值成功");
+        await loadContractBalance();
+    }
+    async function adminWithdraw() { 
+        const amount=document.getElementById("withdrawAmount").value;
+        if(!amount) return;
+        const wei=parseAmount(amount);
+        const tx=await stakeContract.adminTakeSurplus(wei);
+        await tx.wait();
+        alert("提取成功");
+        await loadContractBalance();
+    }
+
+    document.getElementById("connectBtn").onclick = async () => { await initWeb3(); };
+    document.getElementById("stakeBtn").onclick = approveAndStake;
+    document.getElementById("bindReferBtn").onclick = bindReferral;
+    document.getElementById("updateRateBtn").onclick = updateRate;
+    document.getElementById("updateLvBtn").onclick = updateLvConfig;
+    document.getElementById("adminAddRewardBtn").onclick = adminAddReward;
+    document.getElementById("adminWithdrawBtn").onclick = adminWithdraw;
+    document.getElementById("refreshUserBtn")?.addEventListener("click", () => loadUserInfo());
+    document.getElementById("refreshOrdersBtn")?.addEventListener("click", () => loadStakeOrders());
+    document.getElementById("refreshAdminBal")?.addEventListener("click", () => loadContractBalance());
+    document.getElementById("balRefreshBtn")?.addEventListener("click", () => loadContractBalance());
+    
+    initLockDaysButtons();
+    window.addEventListener("load", async () => { await initWeb3(); });
+</script>
+</body>
+</html>
