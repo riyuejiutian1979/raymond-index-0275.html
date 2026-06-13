@@ -338,31 +338,18 @@
 <script>
     // ================= 配置区域 =================
     const TARGET_CHAIN_ID = 137;   // Polygon 主网
-    const HOMEPAGE_URL = "https://riyuejiutian1979.github.io/raymond-index-5.html";  // 修改为您自己的首页
-    const CONTRACT_ADDRESS = "0x601c01A4c5E9c6db87028490108E7a641D23e2C4";
-    // ===========================================
-
-    // 完整 ABI - RaymondStakeNew 合约（包含充值/提取）
-    const CONTRACT_ABI = [
-        "function stakeToken() view returns (address)",
-        "function owner() view returns (address)",
-        "function rateConfig() view returns (uint256 day30,uint256 day90,uint256 day180,uint256 day360)",
-        "function levelParam(uint256) view returns (uint256 selfNeedStake,uint256 needDirectUpLvCnt,uint256 teamNeedVolume,uint256 bonusRate)",
-        "function bindRefer(address referAddr) external",
-        "function stake(uint256 amount,uint256 lockDays) external",
-        "function getDailyReward(uint256 orderId) external",
-        "function unStake(uint256 orderId) external",
-        "function editRate(uint256 d30,uint256 d90,uint256 d180,uint256 d360) external",
-        "function editLvConfig(uint256 lv,uint256 selfStk,uint256 directNum,uint256 teamVol,uint256 bonusRate) external",
-        "function adminAddRewardFund(uint256 amount) external",
-        "function adminTakeSurplus(uint256 outAmount) external",
-        "function getUserBaseInfo(address user) view returns (uint256 lv,uint256 selfStk,uint256 teamVol,uint256 directCnt,uint256 totalEarn)",
-        "function getSingleStake(address user,uint256 orderId) view returns (uint256 amount,uint256 startTs,uint256 endTs,uint256 dayRate,uint256 claimedReward,bool finished)",
-        "function getStakeTotalCnt(address user) view returns (uint256)",
-        "function getDirectList(address user) view returns (address[])",
-        "function getContractTokenBalance() view returns (uint256)"
+    const HOMEPAGE_URL = "web-5.html";  // 修改为您自己的首页
+    // 链上配置合约地址（存储所有核心合约地址）
+    const CONFIG_CONTRACT_ADDRESS = "0x9A1f3F1275228f449A57155671Ee735BE349201f";
+    // 配置合约 ABI（只读）
+    const CONFIG_ABI = [
+        "function raycToken() view returns (address)",
+        "function idoContract() view returns (address)",
+        "function miningContract() view returns (address)",
+        "function communityContract() view returns (address)",
+        "function auxiliaryContract() view returns (address)"   // 质押合约地址
     ];
-    const ERC20_ABI = ["function approve(address spender, uint256 amount) returns (bool)", "function allowance(address owner, address spender) view returns (uint256)", "function balanceOf(address account) view returns (uint256)", "function decimals() view returns (uint8)", "function symbol() view returns (string)"];
+    // ===========================================
 
     let provider, signer, stakeContract, stakeTokenContract;
     let currentAccount = null;
@@ -470,7 +457,8 @@
                 return false;
             } else {
                 warningDiv.style.display = "none";
-                await setupContracts();
+                // 关键改动：先从配置合约读取质押合约地址，再初始化
+                await setupContractsFromConfig();
                 await loadAllData();
                 return true;
             }
@@ -485,16 +473,49 @@
         }
     }
 
-    async function setupContracts() {
-        stakeContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    // 从链上配置合约获取质押合约地址
+    async function setupContractsFromConfig() {
+        // 1. 创建配置合约实例
+        const configContract = new ethers.Contract(CONFIG_CONTRACT_ADDRESS, CONFIG_ABI, signer);
+        // 2. 读取 auxiliaryContract（即质押合约地址）
+        const stakeContractAddr = await configContract.auxiliaryContract();
+        if (!ethers.utils.isAddress(stakeContractAddr)) {
+            throw new Error("配置合约返回的质押合约地址无效");
+        }
+        // 3. 初始化质押合约
+        stakeContract = new ethers.Contract(stakeContractAddr, CONTRACT_ABI, signer);
+        // 4. 获取质押代币地址并初始化代币合约
         const stakeTokenAddr = await stakeContract.stakeToken();
         stakeTokenContract = new ethers.Contract(stakeTokenAddr, ERC20_ABI, signer);
         try { tokenDecimals = await stakeTokenContract.decimals(); } catch(e) { tokenDecimals = 18; }
         try { tokenSymbol = await stakeTokenContract.symbol(); } catch(e) { tokenSymbol = "RAYC"; }
+        // 5. 获取合约 Owner 用于显示管理面板
         contractOwner = await stakeContract.owner();
         const isOwner = currentAccount && currentAccount.toLowerCase() === contractOwner.toLowerCase();
         document.getElementById("adminPanel").style.display = isOwner ? "block" : "none";
     }
+
+    // 完整 ABI - RaymondStakeNew 合约（包含充值/提取）
+    const CONTRACT_ABI = [
+        "function stakeToken() view returns (address)",
+        "function owner() view returns (address)",
+        "function rateConfig() view returns (uint256 day30,uint256 day90,uint256 day180,uint256 day360)",
+        "function levelParam(uint256) view returns (uint256 selfNeedStake,uint256 needDirectUpLvCnt,uint256 teamNeedVolume,uint256 bonusRate)",
+        "function bindRefer(address referAddr) external",
+        "function stake(uint256 amount,uint256 lockDays) external",
+        "function getDailyReward(uint256 orderId) external",
+        "function unStake(uint256 orderId) external",
+        "function editRate(uint256 d30,uint256 d90,uint256 d180,uint256 d360) external",
+        "function editLvConfig(uint256 lv,uint256 selfStk,uint256 directNum,uint256 teamVol,uint256 bonusRate) external",
+        "function adminAddRewardFund(uint256 amount) external",
+        "function adminTakeSurplus(uint256 outAmount) external",
+        "function getUserBaseInfo(address user) view returns (uint256 lv,uint256 selfStk,uint256 teamVol,uint256 directCnt,uint256 totalEarn)",
+        "function getSingleStake(address user,uint256 orderId) view returns (uint256 amount,uint256 startTs,uint256 endTs,uint256 dayRate,uint256 claimedReward,bool finished)",
+        "function getStakeTotalCnt(address user) view returns (uint256)",
+        "function getDirectList(address user) view returns (address[])",
+        "function getContractTokenBalance() view returns (uint256)"
+    ];
+    const ERC20_ABI = ["function approve(address spender, uint256 amount) returns (bool)", "function allowance(address owner, address spender) view returns (uint256)", "function balanceOf(address account) view returns (uint256)", "function decimals() view returns (uint8)", "function symbol() view returns (string)"];
 
     function formatAmount(bn) {
         if (!bn) return "0";
@@ -600,7 +621,7 @@
             document.getElementById("mobileOrdersList").innerHTML = mobileHtml;
             
             // 桌面表格
-            let tableHtml = `<table><thead><tr><th>ID</th><th>数量</th><th>开始时间</th><th>解锁时间</th><th>日利率</th><th>已领</th><th>待领</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
+            let tableHtml = `<td><thead><tr><th>ID</th><th>数量</th><th>开始时间</th><th>解锁时间</th><th>日利率</th><th>已领</th><th>待领</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
             for (let o of orders) {
                 let statusText = o.finished ? "已赎回" : (o.isMature ? "可解除" : "质押中");
                 tableHtml += `<tr>
@@ -615,7 +636,7 @@
                     <td>
                         ${!o.finished && o.pendingReward.gt(0) ? `<button class="btn-sm btn-success" onclick="claimReward(${o.id})">领取</button>` : ''}
                         ${!o.finished && o.isMature ? `<button class="btn-sm btn-danger" onclick="unStakeOrder(${o.id})">解除</button>` : ''}
-                    </td>
+                     </td>
                 </tr>`;
             }
             tableHtml += `</tbody></table>`;
@@ -642,9 +663,11 @@
         const amountInput = document.getElementById("stakeAmount").value;
         if (!amountInput || parseFloat(amountInput) < 1000) { alert("质押数量最小 1000 代币"); return; }
         const amountWei = parseAmount(amountInput);
-        const allowance = await stakeTokenContract.allowance(currentAccount, CONTRACT_ADDRESS);
+        // 获取质押合约地址（动态）
+        const stakeContractAddr = stakeContract.address;
+        const allowance = await stakeTokenContract.allowance(currentAccount, stakeContractAddr);
         if (allowance.lt(amountWei)) {
-            const approveTx = await stakeTokenContract.approve(CONTRACT_ADDRESS, amountWei);
+            const approveTx = await stakeTokenContract.approve(stakeContractAddr, amountWei);
             await approveTx.wait();
         }
         const tx = await stakeContract.stake(amountWei, currentSelectedDays);
@@ -681,8 +704,9 @@
         const amount=document.getElementById("rechargeAmount").value;
         if(!amount) return;
         const wei=parseAmount(amount);
-        const allowance=await stakeTokenContract.allowance(currentAccount,CONTRACT_ADDRESS);
-        if(allowance.lt(wei)){ const approveTx=await stakeTokenContract.approve(CONTRACT_ADDRESS,wei); await approveTx.wait(); }
+        const stakeContractAddr = stakeContract.address;
+        const allowance=await stakeTokenContract.allowance(currentAccount, stakeContractAddr);
+        if(allowance.lt(wei)){ const approveTx=await stakeTokenContract.approve(stakeContractAddr, wei); await approveTx.wait(); }
         const tx=await stakeContract.adminAddRewardFund(wei);
         await tx.wait();
         alert("充值成功");
